@@ -78,7 +78,7 @@ class OptimalStatistic(object):
         else:
             raise ValueError('Unknown ORF!')
 
-    def compute_os(self, params=None, psd='powerlaw', fgw=None):
+    def compute_os(self, params=None, psd='powerlaw', fgw=None, auto=False):
         """
         Computes the optimal statistic values given an
         `enterprise` parameter dictionary.
@@ -86,6 +86,7 @@ class OptimalStatistic(object):
         :param params: `enterprise` parameter dictionary.
         :param psd: choice of cross-power psd [powerlaw,spectrum]
         :fgw: frequency of GW spectrum to probe, in Hz [default=None]
+        :auto: compute OS with autocorrelations [False]
 
         :returns:
             xi: angular separation [rad] for each pulsar pair
@@ -140,8 +141,10 @@ class OptimalStatistic(object):
 
         npsr = len(self.pta._signalcollections)
         rho, sig, ORF, xi = [], [], [], []
-        for ii in range(npsr):
-            for jj in range(ii+1, npsr):
+
+        if auto:
+            for ii in range(npsr):
+                jj = ii
 
                 if psd == 'powerlaw':
                     if self.gamma_common is None and 'gw_gamma' in params.keys():
@@ -170,6 +173,37 @@ class OptimalStatistic(object):
 
                 # angular separation
                 xi.append(np.arccos(np.dot(self.psrlocs[ii], self.psrlocs[jj])))
+        else:
+            for ii in range(npsr):
+                for jj in range(ii+1, npsr):
+
+                    if psd == 'powerlaw':
+                        if self.gamma_common is None and 'gw_gamma' in params.keys():
+                            print('{0:1.2}'.format(params['gw_gamma']))
+                            phiIJ = utils.powerlaw(self.freqs, log10_A=0,
+                                                gamma=params['gw_gamma'])
+                        else:
+                            phiIJ = utils.powerlaw(self.freqs, log10_A=0,
+                                                gamma=self.gamma_common)
+                    elif psd == 'spectrum':
+                        Sf = -np.inf * np.ones(int(len(self.freqs)/2))
+                        idx = (np.abs(np.unique(self.freqs) - fgw)).argmin()
+                        Sf[idx] = 0.0
+                        phiIJ = gp_priors.free_spectrum(self.freqs,
+                                                        log10_rho=Sf)
+
+                    top = np.dot(X[ii], phiIJ * X[jj])
+                    bot = np.trace(np.dot(Z[ii]*phiIJ[None,:], Z[jj]*phiIJ[None,:]))
+
+                    # cross correlation and uncertainty
+                    rho.append(top / bot)
+                    sig.append(1 / np.sqrt(bot))
+
+                    # Overlap reduction function for PSRs ii, jj
+                    ORF.append(self.orf(self.psrlocs[ii], self.psrlocs[jj]))
+
+                    # angular separation
+                    xi.append(np.arccos(np.dot(self.psrlocs[ii], self.psrlocs[jj])))
 
         rho = np.array(rho)
         sig = np.array(sig)
@@ -180,13 +214,14 @@ class OptimalStatistic(object):
 
         return xi, rho, sig, OS, OS_sig
 
-    def compute_noise_marginalized_os(self, chain, param_names=None, N=10000):
+    def compute_noise_marginalized_os(self, chain, param_names=None, N=10000, auto=False):
         """
         Compute noise marginalized OS.
 
         :param chain: MCMC chain from Bayesian run.
         :param param_names: list of parameter names for the chain file
         :param N: number of iterations to run.
+        :param auto: version of OS that computes autocorrelations
 
         :returns: (os, snr) array of OS and SNR values for each iteration.
 
@@ -212,17 +247,18 @@ class OptimalStatistic(object):
                 setpars.update(self.pta.map_params(chain[idx, :-4]))
             else:
                 setpars = dict(zip(param_names, chain[idx, :-4]))
-            xi, rho_tmp, rho_sig_tmp, opt[ii], sig[ii] = self.compute_os(params=setpars)
+            xi, rho_tmp, rho_sig_tmp, opt[ii], sig[ii] = self.compute_os(params=setpars, auto=auto)
             rho.append(rho_tmp)
             rho_sig.append(rho_sig_tmp)
 
         return (np.array(xi), np.array(rho), np.array(rho_sig), opt, opt/sig)
 
-    def compute_noise_maximized_os(self, chain, param_names=None):
+    def compute_noise_maximized_os(self, chain, param_names=None, auto=False):
         """
         Compute noise maximized OS.
 
         :param chain: MCMC chain from Bayesian run.
+        :param auto: version of OS that computes autocorrelations
 
         :returns:
             xi: angular separation [rad] for each pulsar pair
@@ -242,15 +278,24 @@ class OptimalStatistic(object):
 
         idx = np.argmax(chain[:, -4])
 
+        res = []
+        for i in range(chain.shape[1] - 4):
+            counts, edges = np.histogram(chain[:, i], bins=41)
+            edges = edges[:-1]
+            widths = np.diff(edges)
+            res.append(edges[np.argmax(counts)] + widths[np.argmax(counts)] * np.random.uniform(0, 1))
+
         # if param_names is not specified, the parameter dictionary
         # is made by mapping the values from the chain to the
         # parameters in the pta object
         if param_names is None:
-            setpars = (self.pta.map_params(chain[idx, :-4]))
+            # setpars = (self.pta.map_params(chain[idx, :-4]))
+            setpars = (self.pta.map_params(res))
         else:
-            setpars = dict(zip(param_names, chain[idx, :-4]))
+            # setpars = dict(zip(param_names, chain[idx, :-4]))
+            setpars = dict(zip(param_names, res))
 
-        xi, rho, sig, Opt, Sig = self.compute_os(params=setpars)
+        xi, rho, sig, Opt, Sig = self.compute_os(params=setpars, auto=auto)
 
         return (xi, rho, sig, Opt, Opt/Sig)
 
