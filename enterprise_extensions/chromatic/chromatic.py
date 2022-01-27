@@ -4,6 +4,13 @@ import numpy as np
 from enterprise import constants as const
 from enterprise.signals import deterministic_signals, parameter, signal_base
 
+from jax import grad, jit, vmap, random, lax, value_and_grad
+import jax.numpy as jnp
+from jax.config import config
+import jax.scipy as jsp
+config.update("jax_enable_x64", True)
+
+
 __all__ = ['chrom_exp_decay',
            'chrom_exp_cusp',
            'chrom_dual_exp_cusp',
@@ -154,7 +161,7 @@ def chrom_yearly_sinusoid(toas, freqs, log10_Amp=-7, phase=0, idx=2):
     :return wf: delay time-series [s]
     """
 
-    wf = 10**log10_Amp * np.sin(2 * np.pi * const.fyr * toas + phase)
+    wf = 10**log10_Amp * jnp.sin(2 * np.pi * const.fyr * toas + phase)
     return wf * (1400 / freqs) ** idx
 
 
