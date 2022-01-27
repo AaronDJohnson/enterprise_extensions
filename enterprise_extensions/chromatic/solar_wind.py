@@ -10,6 +10,12 @@ from enterprise.signals import (deterministic_signals, gp_signals, parameter,
 
 from .. import gp_kernels as gpk
 
+from jax import grad, jit, vmap, random, lax, value_and_grad
+import jax.numpy as jnp
+from jax.config import config
+import jax.scipy as jsp
+config.update("jax_enable_x64", True)
+
 defpath = os.path.dirname(__file__)
 
 yr_in_sec = 365.25*24*3600
@@ -239,7 +245,7 @@ def dm_solar(n_earth, theta, r_earth):
     ::param :r_earth :distance from Earth to Sun in (light seconds).
     See You et al. 20007 for more details.
     """
-    return np.where(np.pi - theta >= 1e-5,
+    return jnp.where(np.pi - theta >= 1e-5,
                     _dm_solar(n_earth, theta, r_earth),
                     _dm_solar_close(n_earth, r_earth))
 
