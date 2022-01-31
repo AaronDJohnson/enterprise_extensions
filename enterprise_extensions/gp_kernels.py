@@ -3,6 +3,12 @@
 import numpy as np
 from enterprise.signals import signal_base, utils
 
+from jax import grad, jit, vmap, random, lax, value_and_grad
+import jax.numpy as jnp
+from jax.config import config
+import jax.scipy as jsp
+config.update("jax_enable_x64", True)
+
 __all__ = ['linear_interp_basis_dm',
            'linear_interp_basis_freq',
            'dmx_ridge_prior',
@@ -190,8 +196,8 @@ def sf_kernel(labels, log10_sigma=-7, log10_ell=2,
     l2 = 10**log10_ell2
     alpha_wgt = 10**log10_alpha_wgt
 
-    d = np.eye(r.shape[0]) * (sigma/500)**2
-    Kt = sigma**2 * np.exp(-r**2/2/l**2)
+    d = jnp.eye(r.shape[0]) * (sigma/500)**2
+    Kt = sigma**2 * jnp.exp(-r**2/2/l**2)
     Kv = (1+r2**2/2/alpha_wgt/l2**2)**(-alpha_wgt)
 
     return Kt * Kv + d
