@@ -43,8 +43,8 @@ def chrom_exp_decay(toas, freqs, log10_Amp=-7, sign_param=-1.0,
     t0 *= const.day
     tau = 10**log10_tau * const.day
     wf = jnp.where(toas > t0,
-                   10**log10_Amp * jnp.heaviside(toas - t0, 1),
-                   10**log10_Amp * jnp.heaviside(toas - t0, 1) * jnp.exp(- (toas - t0) / tau))
+                   10**log10_Amp * jnp.heaviside(toas - t0, 1) * jnp.exp(- (toas - t0) / tau),
+                   10**log10_Amp * jnp.heaviside(toas - t0, 1))
     return jnp.sign(sign_param) * wf * (1400 / freqs) ** idx
 
 
@@ -68,26 +68,32 @@ def chrom_exp_cusp(toas, freqs, log10_Amp=-7, sign_param=-1.0,
     t0 *= const.day
     if symmetric:
         tau = 10**log10_tau_pre * const.day
-        ind_pre = np.where(toas < t0)[0]
-        ind_post = np.where(toas > t0)[0]
-        wf_pre = 10**log10_Amp * (1 - np.heaviside(toas - t0, 1))
-        wf_pre[ind_pre] *= np.exp(- (t0 - toas[ind_pre]) / tau)
-        wf_post = 10**log10_Amp * np.heaviside(toas - t0, 1)
-        wf_post[ind_post] *= np.exp(- (toas[ind_post] - t0) / tau)
+        # ind_pre = np.where(toas < t0)[0]
+        # ind_post = np.where(toas > t0)[0]
+        wf_pre = 10**log10_Amp * (1 - jnp.heaviside(toas - t0, 1))
+        # wf_pre[ind_pre] *= np.exp(- (t0 - toas[ind_pre]) / tau)
+        wf_pre = jnp.where(toas < t0, wf_pre * jnp.exp(- (t0 - toas) / tau), wf_pre)
+        wf_post = 10**log10_Amp * jnp.heaviside(toas - t0, 1)
+        # wf_post[ind_post] *= np.exp(- (toas[ind_post] - t0) / tau)
+        wf_post = jnp.where(toas > t0, wf_post * jnp.exp(- (toas - t0) / tau), wf_post)
+        
         wf = wf_pre + wf_post
+
 
     else:
         tau_pre = 10**log10_tau_pre * const.day
         tau_post = 10**log10_tau_post * const.day
-        ind_pre = np.where(toas < t0)[0]
-        ind_post = np.where(toas > t0)[0]
-        wf_pre = 10**log10_Amp * (1 - np.heaviside(toas - t0, 1))
-        wf_pre[ind_pre] *= np.exp(- (t0 - toas[ind_pre]) / tau_pre)
-        wf_post = 10**log10_Amp * np.heaviside(toas - t0, 1)
-        wf_post[ind_post] *= np.exp(- (toas[ind_post] - t0) / tau_post)
+        # ind_pre = np.where(toas < t0)[0]
+        # ind_post = np.where(toas > t0)[0]
+        wf_pre = 10**log10_Amp * (1 - jnp.heaviside(toas - t0, 1))
+        # wf_pre[ind_pre] *= np.exp(- (t0 - toas[ind_pre]) / tau_pre)
+        wf_pre = jnp.where(toas < t0, wf_pre * jnp.exp(- (t0 - toas) / tau_pre), wf_pre)
+        wf_post = 10**log10_Amp * jnp.heaviside(toas - t0, 1)
+        # wf_post[ind_post] *= np.exp(- (toas[ind_post] - t0) / tau_post)
+        wf_post = jnp.where(toas > t0, wf_post * jnp.exp(- (toas - t0) / tau_post), wf_post)
         wf = wf_pre + wf_post
 
-    return np.sign(sign_param) * wf * (1400 / freqs) ** idx
+    return jnp.sign(sign_param) * wf * (1400 / freqs) ** idx
 
 
 @signal_base.function
