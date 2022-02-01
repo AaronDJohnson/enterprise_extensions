@@ -171,7 +171,7 @@ def tf_kernel(labels, log10_sigma=-7, log10_ell=2, log10_gam_p=0,
     alpha_wgt = 10**log10_alpha_wgt
 
     d = np.eye(r.shape[0]) * (sigma/500)**2
-    Kt = sigma**2 * np.exp(-r**2/2/l**2 - gam_p*np.sin(np.pi*r/p)**2)
+    Kt = sigma**2 * jnp.exp(-r**2/2/l**2 - gam_p*jnp.sin(np.pi*r/p)**2)
     Kv = (1+r2**2/2/alpha_wgt/l2**2)**(-alpha_wgt)
 
     return Kt * Kv + d
