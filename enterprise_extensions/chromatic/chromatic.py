@@ -45,7 +45,7 @@ def chrom_exp_decay(toas, freqs, log10_Amp=-7, sign_param=-1.0,
     # ind = jnp.where(toas > t0)[0]
     ind = jnp.searchsorted(toas, t0)
     wf = 10**log10_Amp * jnp.heaviside(toas - t0, 1)
-    wf = wf.at[ind].set(wf * jnp.exp(- (toas[ind:] - t0) / tau))
+    wf = wf.at[ind:].set(wf[ind:] * jnp.exp(- (toas[ind:] - t0) / tau))
 
     return jnp.sign(sign_param) * wf * (1400 / freqs) ** idx
 
