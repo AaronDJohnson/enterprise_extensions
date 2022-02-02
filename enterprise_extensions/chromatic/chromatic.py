@@ -117,41 +117,49 @@ def chrom_dual_exp_cusp(toas, freqs, t0=54000, sign_param=-1.0,
     :return wf: delay time-series [s]
     """
     t0 *= const.day
-    ind_pre = np.where(toas < t0)[0]
-    ind_post = np.where(toas > t0)[0]
+    # ind_pre = np.where(toas < t0)[0]
+    # ind_post = np.where(toas > t0)[0]
     if symmetric:
         tau_1 = 10**log10_tau_pre_1 * const.day
-        wf_1_pre = 10**log10_Amp_1 * (1 - np.heaviside(toas - t0, 1))
-        wf_1_pre[ind_pre] *= np.exp(- (t0 - toas[ind_pre]) / tau_1)
-        wf_1_post = 10**log10_Amp_1 * np.heaviside(toas - t0, 1)
-        wf_1_post[ind_post] *= np.exp(- (toas[ind_post] - t0) / tau_1)
+        wf_1_pre = 10**log10_Amp_1 * (1 - jnp.heaviside(toas - t0, 1))
+        wf_1_pre = jnp.where(toas < t0, wf_1_pre * jnp.exp(- (t0 - toas) / tau_1), wf_1_pre)
+        wf_1_post = 10**log10_Amp_1 * jnp.heaviside(toas - t0, 1)
+        # wf_1_post[ind_post] *= np.exp(- (toas[ind_post] - t0) / tau_1)
+        wf_1_post = jnp.where(toas > t0, wf_1_post * jnp.exp(- (t0 - toas) / tau_1), wf_1_post)
+
         wf_1 = wf_1_pre + wf_1_post
 
         tau_2 = 10**log10_tau_pre_2 * const.day
-        wf_2_pre = 10**log10_Amp_2 * (1 - np.heaviside(toas - t0, 1))
-        wf_2_pre[ind_pre] *= np.exp(- (t0 - toas[ind_pre]) / tau_2)
-        wf_2_post = 10**log10_Amp_2 * np.heaviside(toas - t0, 1)
-        wf_2_post[ind_post] *= np.exp(- (toas[ind_post] - t0) / tau_2)
+        wf_2_pre = 10**log10_Amp_2 * (1 - jnp.heaviside(toas - t0, 1))
+        # wf_2_pre[ind_pre] *= np.exp(- (t0 - toas[ind_pre]) / tau_2)
+        wf_2_pre = jnp.where(toas < t0, wf_2_pre * jnp.exp(- (t0 - toas) / tau_2), wf_2_pre)
+        wf_2_post = 10**log10_Amp_2 * jnp.heaviside(toas - t0, 1)
+        # wf_2_post[ind_post] *= np.exp(- (toas[ind_post] - t0) / tau_2)
+        wf_2_post = jnp.where(toas > t0, wf_2_post * jnp.exp(- (toas - t0) / tau_2), wf_2_post)
         wf_2 = wf_2_pre + wf_2_post
 
     else:
         tau_1_pre = 10**log10_tau_pre_1 * const.day
         tau_1_post = 10**log10_tau_post_1 * const.day
-        wf_1_pre = 10**log10_Amp_1 * (1 - np.heaviside(toas - t0, 1))
-        wf_1_pre[ind_pre] *= np.exp(- (t0 - toas[ind_pre]) / tau_1_pre)
-        wf_1_post = 10**log10_Amp_1 * np.heaviside(toas - t0, 1)
-        wf_1_post[ind_post] *= np.exp(- (toas[ind_post] - t0) / tau_1_post)
+        wf_1_pre = 10**log10_Amp_1 * (1 - jnp.heaviside(toas - t0, 1))
+        # wf_1_pre[ind_pre] *= np.exp(- (t0 - toas[ind_pre]) / tau_1_pre)
+        wf_1_pre = jnp.where(toas < t0, wf_1_pre * jnp.exp(- (t0 - toas) / tau_1_pre), wf_1_pre)
+        wf_1_post = 10**log10_Amp_1 * jnp.heaviside(toas - t0, 1)
+        # wf_1_post[ind_post] *= np.exp(- (toas[ind_post] - t0) / tau_1_post)
+        wf_1_post = jnp.where(toas > t0, wf_1_post * jnp.exp(- (toas - t0) / tau_1_post), wf_1_post)
         wf_1 = wf_1_pre + wf_1_post
 
         tau_2_pre = 10**log10_tau_pre_2 * const.day
         tau_2_post = 10**log10_tau_post_2 * const.day
-        wf_2_pre = 10**log10_Amp_2 * (1 - np.heaviside(toas - t0, 1))
-        wf_2_pre[ind_pre] *= np.exp(- (t0 - toas[ind_pre]) / tau_2_pre)
-        wf_2_post = 10**log10_Amp_2 * np.heaviside(toas - t0, 1)
-        wf_2_post[ind_post] *= np.exp(- (toas[ind_post] - t0) / tau_2_post)
+        wf_2_pre = 10**log10_Amp_2 * (1 - jnp.heaviside(toas - t0, 1))
+        # wf_2_pre[ind_pre] *= np.exp(- (t0 - toas[ind_pre]) / tau_2_pre)
+        wf_2_pre = jnp.where(toas < t0, wf_2_pre * jnp.exp(- (t0 - toas) / tau_2_pre), wf_2_pre)
+        wf_2_post = 10**log10_Amp_2 * jnp.heaviside(toas - t0, 1)
+        # wf_2_post[ind_post] *= np.exp(- (toas[ind_post] - t0) / tau_2_post)
+        wf_2_post = jnp.where(toas > t0, wf_2_post * jnp.exp(- (toas - t0) / tau_2_post), wf_2_post)
         wf_2 = wf_2_pre + wf_2_post
 
-    return np.sign(sign_param) * (wf_1 * (1400 / freqs) ** idx1 + wf_2 * (1400 / freqs) ** idx2)
+    return jnp.sign(sign_param) * (wf_1 * (1400 / freqs) ** idx1 + wf_2 * (1400 / freqs) ** idx2)
 
 
 @signal_base.function
