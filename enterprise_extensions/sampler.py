@@ -1021,7 +1021,7 @@ def save_runtime_info(pta, outdir='chains', human=None):
             fout.write(pp.__repr__() + "\n")
 
 
-def setup_sampler(pta, outdir='chains', resume=False,
+def setup_sampler(pta, outdir='chains', resume=False, seed=None,
                   empirical_distr=None, groups=None, human=None,
                   save_ext_dists=False, loglkwargs={}, logpkwargs={}):
     """
@@ -1074,7 +1074,7 @@ def setup_sampler(pta, outdir='chains', resume=False,
 
     sampler = ptmcmc(ndim, pta.get_lnlikelihood, pta.get_lnprior, cov, groups=groups,
                      outDir=outdir, resume=resume, loglkwargs=loglkwargs,
-                     logpkwargs=logpkwargs)
+                     logpkwargs=logpkwargs, seed=seed)
 
     save_runtime_info(pta, sampler.outDir, human)
 

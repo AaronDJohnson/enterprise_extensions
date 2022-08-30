@@ -156,7 +156,7 @@ class HyperModel(object):
 
     def setup_sampler(self, outdir='chains', resume=False, sample_nmodel=True,
                       empirical_distr=None, groups=None, human=None,
-                      loglkwargs={}, logpkwargs={}):
+                      loglkwargs={}, logpkwargs={}, seed=None):
         """
         Sets up an instance of PTMCMC sampler.
 
@@ -191,7 +191,7 @@ class HyperModel(object):
 
         sampler = ptmcmc(ndim, self.get_lnlikelihood, self.get_lnprior, cov,
                          groups=groups, outDir=outdir, resume=resume,
-                         loglkwargs=loglkwargs, logpkwargs=logpkwargs)
+                         loglkwargs=loglkwargs, logpkwargs=logpkwargs, seed=seed)
 
         save_runtime_info(self, sampler.outDir, human)
 
