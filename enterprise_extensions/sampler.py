@@ -124,13 +124,14 @@ def extend_emp_dists(pta, emp_dists, npoints=100_000, save_ext_dists=False, outd
 
 class JumpProposal(object):
 
-    def __init__(self, pta, snames=None, empirical_distr=None, f_stat_file=None, save_ext_dists=False, outdir='chains'):
+    def __init__(self, pta, snames=None, empirical_distr=None, f_stat_file=None, save_ext_dists=False, outdir='chains', seed=None):
         """Set up some custom jump proposals"""
         self.params = pta.params
         self.pnames = pta.param_names
         self.psrnames = pta.pulsars
         self.ndim = sum(p.size or 1 for p in pta.params)
         self.plist = [p.name for p in pta.params]
+        self.stream = np.random.default_rng(seed)
 
         # parameter map
         self.pmap = {}
@@ -249,11 +250,11 @@ class JumpProposal(object):
         lqxy = 0
 
         # randomly choose parameter
-        param = np.random.choice(self.params)
+        param = self.stream.choice(self.params)
 
         # if vector parameter jump in random component
         if param.size:
-            idx2 = np.random.randint(0, param.size)
+            idx2 = self.stream.integers(0, param.size)
             q[self.pmap[str(param)]][idx2] = param.sample()[idx2]
 
         # scalar parameter
@@ -274,9 +275,9 @@ class JumpProposal(object):
         signal_name = 'red noise'
 
         # draw parameter from signal model
-        param = np.random.choice(self.snames[signal_name])
+        param = self.stream.choice(self.snames[signal_name])
         if param.size:
-            idx2 = np.random.randint(0, param.size)
+            idx2 = self.stream.integers(0, param.size)
             q[self.pmap[str(param)]][idx2] = param.sample()[idx2]
 
         # scalar parameter
@@ -297,7 +298,7 @@ class JumpProposal(object):
         if self.empirical_distr is not None:
 
             # randomly choose one of the empirical distributions
-            distr_idx = np.random.randint(0, len(self.empirical_distr))
+            distr_idx = self.stream.integers(0, len(self.empirical_distr))
 
             if self.empirical_distr[distr_idx].ndim == 1:
 
@@ -336,7 +337,7 @@ class JumpProposal(object):
         if self.empirical_distr is not None:
 
             # make list of empirical distributions with psr name
-            psr = np.random.choice(self.psrnames)
+            psr = self.stream.choice(self.psrnames)
             pnames = [ed.param_name if ed.ndim==1 else ed.param_names
                       for ed in self.empirical_distr]
 
@@ -379,9 +380,9 @@ class JumpProposal(object):
         signal_name = 'dm_gp'
 
         # draw parameter from signal model
-        param = np.random.choice(self.snames[signal_name])
+        param = self.stream.choice(self.snames[signal_name])
         if param.size:
-            idx2 = np.random.randint(0, param.size)
+            idx2 = self.stream.integers(0, param.size)
             q[self.pmap[str(param)]][idx2] = param.sample()[idx2]
 
         # scalar parameter
@@ -399,12 +400,12 @@ class JumpProposal(object):
         q = x.copy()
 
         dm1yr_names = [dmname for dmname in self.pnames if 'dm_s1yr' in dmname]
-        dmname = np.random.choice(dm1yr_names)
+        dmname = self.stream.choice(dm1yr_names)
         idx = self.pnames.index(dmname)
         if 'log10_Amp' in dmname:
-            q[idx] = np.random.uniform(-10, -2)
+            q[idx] = self.stream.uniform(-10, -2)
         elif 'phase' in dmname:
-            q[idx] = np.random.uniform(0, 2*np.pi)
+            q[idx] = self.stream.uniform(0, 2*np.pi)
 
         return q, 0
 
@@ -413,14 +414,14 @@ class JumpProposal(object):
         q = x.copy()
 
         dmexp_names = [dmname for dmname in self.pnames if 'dmexp' in dmname]
-        dmname = np.random.choice(dmexp_names)
+        dmname = self.stream.choice(dmexp_names)
         idx = self.pnames.index(dmname)
         if 'log10_Amp' in dmname:
-            q[idx] = np.random.uniform(-10, -2)
+            q[idx] = self.stream.uniform(-10, -2)
         elif 'log10_tau' in dmname:
-            q[idx] = np.random.uniform(0, 2.5)
+            q[idx] = self.stream.uniform(0, 2.5)
         elif 'sign_param' in dmname:
-            q[idx] = np.random.uniform(-1.0, 1.0)
+            q[idx] = self.stream.uniform(-1.0, 1.0)
 
         return q, 0
 
@@ -429,16 +430,16 @@ class JumpProposal(object):
         q = x.copy()
 
         dmexp_names = [dmname for dmname in self.pnames if 'dm_cusp' in dmname]
-        dmname = np.random.choice(dmexp_names)
+        dmname = self.stream.choice(dmexp_names)
         idx = self.pnames.index(dmname)
         if 'log10_Amp' in dmname:
-            q[idx] = np.random.uniform(-10, -2)
+            q[idx] = self.stream.uniform(-10, -2)
         elif 'log10_tau' in dmname:
-            q[idx] = np.random.uniform(0, 2.5)
+            q[idx] = self.stream.uniform(0, 2.5)
         # elif 't0' in dmname:
-        #    q[idx] = np.random.uniform(53393.0, 57388.0)
+        #    q[idx] = self.stream.uniform(53393.0, 57388.0)
         elif 'sign_param' in dmname:
-            q[idx] = np.random.uniform(-1.0, 1.0)
+            q[idx] = self.stream.uniform(-1.0, 1.0)
 
         return q, 0
 
@@ -450,9 +451,9 @@ class JumpProposal(object):
         signal_name = 'dmx_signal'
 
         # draw parameter from signal model
-        param = np.random.choice(self.snames[signal_name])
+        param = self.stream.choice(self.snames[signal_name])
         if param.size:
-            idx2 = np.random.randint(0, param.size)
+            idx2 = self.stream.integers(0, param.size)
             q[self.pmap[str(param)]][idx2] = param.sample()[idx2]
 
         # scalar parameter
@@ -473,9 +474,9 @@ class JumpProposal(object):
         signal_name = 'chrom_gp'
 
         # draw parameter from signal model
-        param = np.random.choice(self.snames[signal_name])
+        param = self.stream.choice(self.snames[signal_name])
         if param.size:
-            idx2 = np.random.randint(0, param.size)
+            idx2 = self.stream.integers(0, param.size)
             q[self.pmap[str(param)]][idx2] = param.sample()[idx2]
 
         # scalar parameter
@@ -499,7 +500,7 @@ class JumpProposal(object):
         idx = list(self.pnames).index(signal_name)
         param = self.params[idx]
 
-        q[self.pmap[str(param)]] = np.random.uniform(param.prior._defaults['pmin'], param.prior._defaults['pmax'])
+        q[self.pmap[str(param)]] = self.stream.uniform(param.prior._defaults['pmin'], param.prior._defaults['pmax'])
 
         # forward-backward jump probability
         lqxy = (param.get_logpdf(x[self.pmap[str(param)]]) -
@@ -513,7 +514,7 @@ class JumpProposal(object):
 
         # draw parameter from signal model
         idx = self.pnames.index('dipole_log10_A')
-        q[idx] = np.random.uniform(-18, -11)
+        q[idx] = self.stream.uniform(-18, -11)
 
         return q, 0
 
@@ -523,7 +524,7 @@ class JumpProposal(object):
 
         # draw parameter from signal model
         idx = self.pnames.index('monopole_log10_A')
-        q[idx] = np.random.uniform(-18, -11)
+        q[idx] = self.stream.uniform(-18, -11)
 
         return q, 0
 
@@ -535,18 +536,18 @@ class JumpProposal(object):
         polnames = [pol for pol in self.pnames if 'log10Apol' in pol]
         if 'kappa' in self.pnames:
             polnames.append('kappa')
-        pol = np.random.choice(polnames)
+        pol = self.stream.choice(polnames)
         idx = self.pnames.index(pol)
         if pol == 'log10Apol_tt':
-            q[idx] = np.random.uniform(-18, -12)
+            q[idx] = self.stream.uniform(-18, -12)
         elif pol == 'log10Apol_st':
-            q[idx] = np.random.uniform(-18, -12)
+            q[idx] = self.stream.uniform(-18, -12)
         elif pol == 'log10Apol_vl':
-            q[idx] = np.random.uniform(-18, -15)
+            q[idx] = self.stream.uniform(-18, -15)
         elif pol == 'log10Apol_sl':
-            q[idx] = np.random.uniform(-18, -16)
+            q[idx] = self.stream.uniform(-18, -16)
         elif pol == 'kappa':
-            q[idx] = np.random.uniform(0, 10)
+            q[idx] = self.stream.uniform(0, 10)
 
         return q, 0
 
@@ -558,9 +559,9 @@ class JumpProposal(object):
         signal_name = 'phys_ephem'
 
         # draw parameter from signal model
-        param = np.random.choice(self.snames[signal_name])
+        param = self.stream.choice(self.snames[signal_name])
         if param.size:
-            idx2 = np.random.randint(0, param.size)
+            idx2 = self.stream.integers(0, param.size)
             q[self.pmap[str(param)]][idx2] = param.sample()[idx2]
 
         # scalar parameter
@@ -581,9 +582,9 @@ class JumpProposal(object):
         signal_name = 'bwm'
 
         # draw parameter from signal model
-        param = np.random.choice(self.snames[signal_name])
+        param = self.stream.choice(self.snames[signal_name])
         if param.size:
-            idx2 = np.random.randint(0, param.size)
+            idx2 = self.stream.integers(0, param.size)
             q[self.pmap[str(param)]][idx2] = param.sample()[idx2]
 
         # scalar parameter
@@ -604,9 +605,9 @@ class JumpProposal(object):
         signal_name = 'fdm'
 
         # draw parameter from signal model
-        param = np.random.choice(self.snames[signal_name])
+        param = self.stream.choice(self.snames[signal_name])
         if param.size:
-            idx2 = np.random.randint(0, param.size)
+            idx2 = self.stream.integers(0, param.size)
             q[self.pmap[str(param)]][idx2] = param.sample()[idx2]
 
         # scalar parameter
@@ -627,9 +628,9 @@ class JumpProposal(object):
         signal_name = 'cw'
 
         # draw parameter from signal model
-        param = np.random.choice(self.snames[signal_name])
+        param = self.stream.choice(self.snames[signal_name])
         if param.size:
-            idx2 = np.random.randint(0, param.size)
+            idx2 = self.stream.integers(0, param.size)
             q[self.pmap[str(param)]][idx2] = param.sample()[idx2]
 
         # scalar parameter
@@ -648,7 +649,7 @@ class JumpProposal(object):
 
         # draw parameter from signal model
         idx = self.pnames.index('log10_h')
-        q[idx] = np.random.uniform(-18, -11)
+        q[idx] = self.stream.uniform(-18, -11)
 
         return q, 0
 
@@ -660,9 +661,9 @@ class JumpProposal(object):
         signal_name = 'gp_sw'
 
         # draw parameter from signal model
-        param = np.random.choice(self.snames[signal_name])
+        param = self.stream.choice(self.snames[signal_name])
         if param.size:
-            idx2 = np.random.randint(0, param.size)
+            idx2 = self.stream.integers(0, param.size)
             q[self.pmap[str(param)]][idx2] = param.sample()[idx2]
 
         # scalar parameter
@@ -694,10 +695,10 @@ class JumpProposal(object):
                ]
         non_std = [nm for nm in self.snames.keys() if nm not in std]
         # draw parameter from signal model
-        signal_name = np.random.choice(non_std)
-        param = np.random.choice(self.snames[signal_name])
+        signal_name = self.stream.choice(non_std)
+        param = self.stream.choice(self.snames[signal_name])
         if param.size:
-            idx2 = np.random.randint(0, param.size)
+            idx2 = self.stream.integers(0, param.size)
             q[self.pmap[str(param)]][idx2] = param.sample()[idx2]
 
         # scalar parameter
@@ -736,13 +737,13 @@ class JumpProposal(object):
             lqxy = 0
 
             # randomly choose parameter
-            idx_name = np.random.choice(par_list)
+            idx_name = self.stream.choice(par_list)
             idx = self.plist.index(idx_name)
 
             # if vector parameter jump in random component
             param = self.params[idx]
             if param.size:
-                idx2 = np.random.randint(0, param.size)
+                idx2 = self.stream.integers(0, param.size)
                 q[self.pmap[str(param)]][idx2] = param.sample()[idx2]
 
             # scalar parameter
@@ -784,9 +785,9 @@ class JumpProposal(object):
             q = x.copy()
 
             # draw parameter from signal model
-            idx_name = np.random.choice(par_list)
+            idx_name = self.stream.choice(par_list)
             idx = self.plist.index(idx_name)
-            q[idx] = np.random.uniform(par_dict[par_name][0], par_dict[par_name][1])
+            q[idx] = self.stream.uniform(par_dict[par_name][0], par_dict[par_name][1])
 
             return q, 0
 
@@ -800,7 +801,7 @@ class JumpProposal(object):
         lqxy = 0
 
         # draw parameter from pulsar names
-        psr = np.random.choice(self.psrnames)
+        psr = self.stream.choice(self.psrnames)
         idxs = [self.pimap[par] for par in self.pnames if psr in par]
         for idx in idxs:
             q[idx] = self.params[idx].sample()
@@ -841,9 +842,9 @@ class JumpProposal(object):
             lqxy = 0
 
             # draw parameter from signal model
-            param = np.random.choice(signal_list)
+            param = self.stream.choice(signal_list)
             if param.size:
-                idx2 = np.random.randint(0, param.size)
+                idx2 = self.stream.integers(0, param.size)
                 q[self.pmap[str(param)]][idx2] = param.sample()[idx2]
 
             # scalar parameter
@@ -878,7 +879,7 @@ class JumpProposal(object):
             hp_idx = hp.ang2pix(hp.get_nside(self.fe), gw_theta, gw_phi)
 
             fe_new_point = self.fe[f_idx, hp_idx]
-            if np.random.uniform()<(fe_new_point/fe_limit):
+            if self.stream.uniform()<(fe_new_point/fe_limit):
                 accepted = True
 
         # draw other parameters from prior
@@ -1079,7 +1080,7 @@ def setup_sampler(pta, outdir='chains', resume=False, seed=None,
     save_runtime_info(pta, sampler.outDir, human)
 
     # additional jump proposals
-    jp = JumpProposal(pta, empirical_distr=empirical_distr, save_ext_dists=save_ext_dists, outdir=outdir)
+    jp = JumpProposal(pta, empirical_distr=empirical_distr, save_ext_dists=save_ext_dists, outdir=outdir, seed=seed)
     sampler.jp = jp
 
     # always add draw from prior

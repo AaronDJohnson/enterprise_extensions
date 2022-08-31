@@ -16,10 +16,11 @@ class HyperModel(object):
     Class to define hyper-model that is the concatenation of all models.
     """
 
-    def __init__(self, models, log_weights=None):
+    def __init__(self, models, log_weights=None, seed=None):
         self.models = models
         self.num_models = len(self.models)
         self.log_weights = log_weights
+        self.stream = np.random.default_rng(seed)
 
         #########
         self.param_names, ind = np.unique(np.concatenate([p.param_names
@@ -148,7 +149,7 @@ class HyperModel(object):
         q = x.copy()
 
         idx = list(self.param_names).index('nmodel')
-        q[idx] = np.random.uniform(-0.5, self.num_models-0.5)
+        q[idx] = self.stream.uniform(-0.5, self.num_models-0.5)
 
         lqxy = 0
 
@@ -175,7 +176,6 @@ class HyperModel(object):
         all either draws from the prior distribution of parameters or
         draws from uniform distributions.
         """
-
         # dimension of parameter space
         ndim = len(self.param_names)
 
@@ -326,7 +326,7 @@ class HyperModel(object):
         if mle:
             ind = np.argmax(model_chain[:, -4])
         else:
-            ind = np.random.randint(burn, model_chain.shape[0])
+            ind = self.stream.integers(burn, model_chain.shape[0])
         params = {par: model_chain[ind, ct]
                   for ct, par in enumerate(self.param_names)
                   if par in pta.param_names}
@@ -357,7 +357,7 @@ class HyperModel(object):
             u, s, _ = sl.svd(Sigi)
             Li = u * np.sqrt(1/s)
 
-        b = mn + np.dot(Li, np.random.randn(Li.shape[0]))
+        b = mn + np.dot(Li, self.stream.standard_normal(size=Li.shape[0]))
 
         # find basis indices
         pardict = {}
