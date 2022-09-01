@@ -196,7 +196,7 @@ class HyperModel(object):
         save_runtime_info(self, sampler.outDir, human)
 
         # additional jump proposals
-        jp = JumpProposal(self, self.snames, empirical_distr=empirical_distr)
+        jp = JumpProposal(self, self.snames, empirical_distr=empirical_distr, seed=self.seed)
         sampler.jp = jp
 
         # always add draw from prior
