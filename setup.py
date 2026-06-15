@@ -70,5 +70,6 @@ setup(
     test_suite="tests",
     tests_require=test_requirements,
     install_requires=requirements,
+    extras_require={"nf": ["coppuccino"]},
     zip_safe=False,
 )
