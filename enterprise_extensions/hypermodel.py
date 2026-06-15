@@ -160,7 +160,7 @@ class HyperModel(object):
 
         lqxy = 0
 
-        return q, float(lqxy)
+        return q, float(np.squeeze(lqxy))
 
     def setup_sampler(
         self,
